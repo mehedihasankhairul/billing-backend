@@ -36,6 +36,32 @@ const signUp = async (req, res) => {
   }
 };
 
-const login = (req, res) => { }
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const existingUser = await userModel.findOne({ email: email });
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User Not Found' });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, existingUser.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: 'Invalid Credentials' });
+    }
+
+    const token = jwt.sign({
+      email: existingUser.email, id: existingUser._id
+    }, process.env.SECRET_KEY);
+
+    res.status(200).json({ user: existingUser, token: token });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+
+
 
 module.exports = { signUp, login };
